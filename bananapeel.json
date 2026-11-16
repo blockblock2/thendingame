@@ -1,0 +1,11 @@
+{
+  "name": "thendingame",
+  "title": "ThEndinGame Uploader",
+  "version": "1.0.0",
+  "description": "Upload TurboWarp Packager games to thendingame.pages.dev/<name>",
+  "main": "uploader.html",
+  "icon": "icon.png",
+  "width": 760,
+  "height": 860,
+  "dmg": true
+}

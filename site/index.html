@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ThEndinGame</title>
+<link rel="icon" href="/favicon.svg">
+<style>
+  :root { --bg:#0b0912; --card:#16121f; --line:#2a2338; --text:#eee9f5; --dim:#9a90ad; --hot:#ff5470; --gold:#ffc94d; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; background:var(--bg); color:var(--text); font:16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  body::before { content:""; position:fixed; inset:0; pointer-events:none;
+    background: radial-gradient(1200px 500px at 50% -200px, #ff547033, transparent 70%); }
+  header { text-align:center; padding:72px 20px 32px; position:relative; }
+  h1 { margin:0; font: 900 clamp(44px, 9vw, 96px)/1 "Arial Black", Impact, system-ui, sans-serif; letter-spacing:-2px; }
+  h1 .e { color:var(--hot); } h1 .g { color:var(--gold); }
+  header p { color:var(--dim); margin:14px 0 0; }
+  .search { display:block; margin:28px auto 0; width:min(420px, 100%); padding:12px 16px; border-radius:999px;
+    border:1px solid var(--line); background:var(--card); color:var(--text); font:inherit; outline:none; }
+  .search:focus { border-color:var(--hot); }
+  main { max-width:1100px; margin:0 auto; padding:8px 20px 80px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:18px; }
+  .game { display:block; text-decoration:none; color:inherit; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; overflow:hidden; transition: transform .15s, border-color .15s; }
+  .game:hover { transform: translateY(-4px); border-color:var(--hot); }
+  .art { aspect-ratio: 4/3; display:grid; place-items:center; font: 900 64px/1 "Arial Black", Impact, sans-serif; color:#fff8; }
+  .info { padding:12px 14px 14px; }
+  .title { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .path { color:var(--dim); font-size:13px; font-family: ui-monospace, Menlo, monospace; }
+  .empty { text-align:center; color:var(--dim); padding:60px 0; }
+  footer { text-align:center; color:var(--dim); font-size:13px; padding-bottom:32px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Th<span class="e">End</span>in<span class="g">Game</span></h1>
+  <p>Pick a game and play.</p>
+  <input class="search" id="q" type="search" placeholder="Search games…" autocomplete="off">
+</header>
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty">Loading games…</div>
+</main>
+<footer>ThEndinGame</footer>
+<script>
+  var all = [];
+  var grid = document.getElementById("grid"), empty = document.getElementById("empty"), q = document.getElementById("q");
+  function hue(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return h; }
+  function render() {
+    var term = q.value.trim().toLowerCase();
+    var list = all.filter(function (g) { return !term || g.title.toLowerCase().includes(term) || g.name.includes(term); });
+    grid.innerHTML = "";
+    list.forEach(function (g) {
+      var a = document.createElement("a");
+      a.className = "game"; a.href = "/" + g.name + "/";
+      var h = hue(g.name);
+      var art = document.createElement("div");
+      art.className = "art";
+      art.style.background = "linear-gradient(135deg, hsl(" + h + " 70% 45%), hsl(" + ((h + 50) % 360) + " 70% 25%))";
+      art.textContent = (g.title.trim()[0] || "?").toUpperCase();
+      var info = document.createElement("div"); info.className = "info";
+      var t = document.createElement("div"); t.className = "title"; t.textContent = g.title;
+      var p = document.createElement("div"); p.className = "path"; p.textContent = "/" + g.name;
+      info.append(t, p); a.append(art, info); grid.append(a);
+    });
+    empty.style.display = list.length ? "none" : "block";
+    empty.textContent = all.length ? "No games match that." : "No games yet.";
+  }
+  q.addEventListener("input", render);
+  fetch("/api/games").then(function (r) { return r.json(); })
+    .then(function (d) { all = d.games || []; render(); })
+    .catch(function () { empty.textContent = "Couldn't load the games list."; });
+</script>
+</body>
+</html>
