@@ -1,5 +1,8 @@
 {
   "name": "thendingame",
   "pages_build_output_dir": "./site",
-  "compatibility_date": "2026-11-01"
+  "compatibility_date": "2026-11-01",
+  "kv_namespaces": [
+    { "binding": "GAMES", "id": "a04d72d5819d4d88a7cd1c19241147ab" }
+  ]
 }
