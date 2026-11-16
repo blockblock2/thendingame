@@ -219,7 +219,12 @@ $("name").addEventListener("input", function () {
   updateButton();
 });
 function nameOk() { var n = $("name").value.trim(); return NAME_RE.test(n) && RESERVED.indexOf(n) < 0; }
-function updateButton() { $("go").disabled = !(state.files && nameOk()); }
+function updateButton() {
+  var n = $("name").value.trim(), go = $("go");
+  go.disabled = !(state.files && nameOk());
+  var taken = nameOk() && currentGames.some(function (g) { return g.name === n; });
+  go.textContent = taken ? "Replace /" + n : "Upload";
+}
 
 // ---------- uploading ----------
 $("go").onclick = async function () {
@@ -228,8 +233,6 @@ $("go").onclick = async function () {
   if (!keyBox.value.trim()) { msg.textContent = "Put your upload key in Settings first."; msg.className = "msg err"; return; }
   var big = state.files.filter(function (f) { return f.data.length > 25 * 1048576; });
   if (big.length) { msg.textContent = big[0].path + " is " + mb(big[0].data.length) + ". Files can be at most 25 MB."; msg.className = "msg err"; return; }
-  var existing = currentGames.some(function (g) { return g.name === name; });
-  if (existing && !confirm("There's already a game at /" + name + ". Replace it?")) return;
 
   save("teg-key", keyBox.value.trim());
   $("go").disabled = true; bar.style.display = "block"; fill.style.width = "0";
@@ -271,6 +274,7 @@ function refresh() {
   var ul = $("games");
   fetch(site() + "/api/games").then(function (r) { return r.json(); }).then(function (d) {
     currentGames = d.games || [];
+    updateButton();
     ul.innerHTML = "";
     if (!currentGames.length) { ul.innerHTML = "<li style=\"color:var(--dim)\">No games yet.</li>"; return; }
     currentGames.forEach(function (g) {
@@ -282,10 +286,19 @@ function refresh() {
       var open = document.createElement("button"); open.className = "small"; open.textContent = "Open";
       open.onclick = function () { window.open(site() + "/" + g.name + "/"); };
       var del = document.createElement("button"); del.className = "small danger"; del.textContent = "Delete";
+      var armed = null;
       del.onclick = function () {
-        if (!confirm("Delete \"" + g.title + "\" from the site?")) return;
-        del.disabled = true;
-        api("games/" + g.name, { method: "DELETE" }).then(refresh).catch(function (e) { alert(e.message); del.disabled = false; });
+        if (!armed) {
+          del.textContent = "Sure? Click again";
+          armed = setTimeout(function () { armed = null; del.textContent = "Delete"; }, 4000);
+          return;
+        }
+        clearTimeout(armed); armed = null;
+        del.disabled = true; del.textContent = "Deleting…";
+        api("games/" + g.name, { method: "DELETE" }).then(refresh).catch(function (e) {
+          del.disabled = false; del.textContent = "Delete";
+          var m = $("msg"); m.className = "msg err"; m.textContent = "Couldn't delete: " + e.message;
+        });
       };
       li.append(t, open, del); ul.append(li);
     });
